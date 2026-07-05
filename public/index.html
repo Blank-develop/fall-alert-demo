@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Fall Alert — Live Demo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="dot" id="statusDot"></span>
+          <span>Fall Alert</span>
+        </div>
+        <div class="pill" id="tgPill">Telegram: …</div>
+      </header>
+
+      <div class="stage">
+        <video id="video" playsinline muted></video>
+        <canvas id="overlay"></canvas>
+
+        <div class="hud">
+          <div class="hud-row">
+            <span class="badge" id="stateBadge">Idle</span>
+            <span class="metric" id="angleMetric">angle —</span>
+            <span class="metric" id="aspectMetric">aspect —</span>
+            <span class="metric" id="faceMetric">face —</span>
+          </div>
+        </div>
+
+        <div class="alert-flash" id="alertFlash">
+          <div class="alert-card">
+            <div class="alert-title" id="alertTitle">🚨 FALL DETECTED</div>
+            <div class="alert-sub" id="alertSub">Sending alert…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="startBtn" class="btn primary">Start camera</button>
+        <button id="switchBtn" class="btn" disabled>Flip camera</button>
+      </div>
+      <div class="controls">
+        <button id="testFallBtn" class="btn warn" disabled>Test fall</button>
+        <button id="testStrangerBtn" class="btn warn" disabled>Test stranger</button>
+      </div>
+
+      <p class="log" id="log">Tap “Start camera”, allow access, then stand in frame and demonstrate a fall.</p>
+    </div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

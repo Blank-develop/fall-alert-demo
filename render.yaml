@@ -1,0 +1,18 @@
+# Render Blueprint — deploys the fall/stranger alert demo as a free web service.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: fall-alert-demo
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      # Set these two as SECRETS in the Render dashboard (sync:false = not in git).
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: CAMERA_LABEL
+        value: Demo Camera (Phone)
