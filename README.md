@@ -26,6 +26,32 @@ updates a live tally at **`GET /stats`** (`confirmed`, `dismissed`, `precisionPc
 
 ---
 
+## Pitch-day deploy (no laptop needed) — Render
+
+Runs the whole app in the cloud so on the day you only open a URL on the phone
+and Telegram on the laptop. Repo: https://github.com/Blank-develop/fall-alert-demo
+
+1. Go to **https://render.com** → sign up / log in **with GitHub**.
+2. **New +** → **Blueprint** → pick the **`fall-alert-demo`** repo → Render reads
+   `render.yaml` automatically.
+3. When prompted, set the two secret env vars:
+   - `TELEGRAM_BOT_TOKEN`
+   - `TELEGRAM_CHAT_ID`
+   *(`CAMERA_LABEL` is already set; you can edit it.)*
+4. **Apply / Create** → wait ~2–3 min for the first build. You get a URL like
+   `https://fall-alert-demo.onrender.com`.
+5. Open that URL **on your phone** (HTTPS, so the camera works). Open Telegram on
+   the laptop to show alerts arriving.
+
+**Important for the day:**
+- Free tier **sleeps after ~15 min idle** (cold start ~1 min). Open the URL a few
+  minutes before you present so it's warm.
+- Only **one** process may poll the bot. Don't run the local `npm start` while the
+  Render service is live, or Telegram returns "409 Conflict".
+- Redeploy after code changes: `git push` (Render auto-deploys).
+
+---
+
 ## 1. Set up the Telegram bot (~3 min)
 
 1. In Telegram, message **@BotFather** → `/newbot` → pick a name → copy the **token**.
