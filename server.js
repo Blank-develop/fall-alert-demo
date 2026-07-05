@@ -216,7 +216,7 @@ async function pollUpdates() {
   }
 }
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`\n  Fall-alert demo running on http://localhost:${PORT}`);
   console.log(
     `  Telegram: ${telegramReady ? "configured ✅" : "NOT configured ⚠️  (edit .env)"}`

@@ -1,3 +1,13 @@
+---
+title: Fall Alert Demo
+emoji: 🚨
+colorFrom: red
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Fall Alert — Live CCTV/Phone Demo
 
 Phone (or laptop) camera → **in-browser MediaPipe pose detection** → when an
