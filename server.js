@@ -1,9 +1,15 @@
 import express from "express";
 import dotenv from "dotenv";
 import path from "node:path";
+import dns from "node:dns";
 import { fileURLToPath } from "node:url";
 
 dotenv.config();
+
+// Containers (e.g. HF Spaces) often lack an IPv6 route. Node's fetch may pick an
+// AAAA record and fail with a bare "fetch failed" without falling back to IPv4.
+// Force IPv4-first resolution so outbound calls to api.telegram.org work.
+dns.setDefaultResultOrder("ipv4first");
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -153,7 +159,7 @@ app.post("/notify", async (req, res) => {
   } catch (err) {
     // Roll back the cooldown so a failed send doesn't block the next real alert.
     lastAlertByType[req.body?.type || "fall"] = 0;
-    console.error("[notify] error:", err.message);
+    console.error("[notify] error:", err.message, err.cause?.code || err.cause || "");
     res.status(502).json({ ok: false, error: err.message });
   }
 });
@@ -210,7 +216,7 @@ async function pollUpdates() {
         await new Promise((r) => setTimeout(r, 2000));
       }
     } catch (err) {
-      console.error("[poll] error:", err.message);
+      console.error("[poll] error:", err.message, err.cause?.code || err.cause || "");
       await new Promise((r) => setTimeout(r, 3000));
     }
   }

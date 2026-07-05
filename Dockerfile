@@ -1,6 +1,9 @@
 # Hugging Face Docker Space — runs the Node alert server.
 FROM node:20-alpine
 
+# CA certs for outbound HTTPS (Telegram API) from alpine.
+RUN apk add --no-cache ca-certificates
+
 WORKDIR /app
 
 # Install prod deps first (better build caching).
