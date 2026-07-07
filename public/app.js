@@ -31,8 +31,10 @@ const log = (msg) => {
 };
 
 // ---------- Config from server ----------
+// Relative path so this works both server-rendered (HF Space route) and as a
+// plain static file (GitHub Pages backup), regardless of base path.
 let cameraLabel = "Demo Camera";
-fetch("/config")
+fetch("config.json")
   .then((r) => r.json())
   .then((cfg) => {
     cameraLabel = cfg.cameraLabel || cameraLabel;

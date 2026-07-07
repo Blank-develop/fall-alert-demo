@@ -24,7 +24,9 @@ const telegramReady = Boolean(TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID);
 // These come from server env/secrets — NOT committed to git — but they ARE
 // served to anyone who opens the page. Use a throwaway demo bot and revoke it
 // after the event.
-app.get("/config", (_req, res) => {
+// Named .json so the exact same client code also works served as a static
+// file (e.g. GitHub Pages backup, which has no server to run this route).
+app.get("/config.json", (_req, res) => {
   res.json({
     cameraLabel: CAMERA_LABEL,
     telegramReady,
