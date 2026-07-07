@@ -30,14 +30,16 @@ const log = (msg) => {
 };
 
 // ---------- Config from server ----------
-// The server never sends the bot token to the client — it only reports
-// whether Telegram is configured. Alerts are sent via our own /notify route.
-let cameraLabel = "Demo Camera";
+// Alerts go to a small Cloudflare Worker relay (not this page's own host):
+// some hosts (HF Spaces) block outbound to Telegram from the server, and the
+// bot token must never be sent to the browser, so a dedicated relay holds the
+// secret and forwards to Telegram. The relay's URL itself isn't sensitive.
+const RELAY_URL = "https://fall-alert-relay.jilayouthbank.workers.dev";
+const cameraLabel = "Demo Camera (Phone)";
 let serverTelegramReady = false;
-fetch("config.json")
+fetch(`${RELAY_URL}/health`)
   .then((r) => r.json())
   .then((cfg) => {
-    cameraLabel = cfg.cameraLabel || cameraLabel;
     serverTelegramReady = Boolean(cfg.telegramReady);
     if (serverTelegramReady) {
       tgPill.textContent = "Telegram: ready";
@@ -47,7 +49,10 @@ fetch("config.json")
       tgPill.classList.add("bad");
     }
   })
-  .catch(() => {});
+  .catch(() => {
+    tgPill.textContent = "Telegram: relay unreachable";
+    tgPill.classList.add("bad");
+  });
 
 // ---------- Detection tuning ----------
 // Torso "angle" = tilt from vertical. ~0° standing, ~90° lying flat.
@@ -435,7 +440,7 @@ async function sendAlert({ type = "fall", title, event, confidence, manual }) {
   } catch (_) {}
 
   try {
-    const res = await fetch("notify", {
+    const res = await fetch(`${RELAY_URL}/notify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
