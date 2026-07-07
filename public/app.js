@@ -3,7 +3,6 @@ import {
   FaceDetector,
   FilesetResolver,
 } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
-import { initTelegram, sendTelegramAlert, telegramReady } from "./telegram.js";
 
 // ---------- DOM ----------
 const video = document.getElementById("video");
@@ -31,24 +30,16 @@ const log = (msg) => {
 };
 
 // ---------- Config from server ----------
-// Relative path so this works both server-rendered (HF Space route) and as a
-// plain static file (GitHub Pages backup), regardless of base path.
+// The server never sends the bot token to the client — it only reports
+// whether Telegram is configured. Alerts are sent via our own /notify route.
 let cameraLabel = "Demo Camera";
+let serverTelegramReady = false;
 fetch("config.json")
   .then((r) => r.json())
   .then((cfg) => {
     cameraLabel = cfg.cameraLabel || cameraLabel;
-    // The browser sends alerts to Telegram directly (host may block server->TG).
-    initTelegram({
-      botToken: cfg.botToken,
-      chatId: cfg.chatId,
-      cameraLabel,
-      onTallyChange: (t) =>
-        log(
-          `Review tally — ✅ ${t.confirmed} real · ❌ ${t.dismissed} false · ${t.alerts} alerts`
-        ),
-    });
-    if (telegramReady()) {
+    serverTelegramReady = Boolean(cfg.telegramReady);
+    if (serverTelegramReady) {
       tgPill.textContent = "Telegram: ready";
       tgPill.classList.add("ok");
     } else {
@@ -407,40 +398,36 @@ function noPerson() {
 }
 
 // ---------- Alert send ----------
-// Returns a JPEG Blob of the current frame with the skeleton + a banner burned in.
-function snapshotBlob(bannerText, color) {
-  return new Promise((resolve, reject) => {
-    const c = document.createElement("canvas");
-    c.width = video.videoWidth;
-    c.height = video.videoHeight;
-    const cx = c.getContext("2d");
-    cx.drawImage(video, 0, 0, c.width, c.height);
-    cx.drawImage(overlay, 0, 0, c.width, c.height);
-    cx.fillStyle = color;
-    cx.fillRect(0, 0, c.width, 44);
-    cx.fillStyle = "#fff";
-    cx.font = "bold 24px sans-serif";
-    cx.fillText(bannerText + " — " + new Date().toLocaleTimeString(), 12, 31);
-    c.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob failed"))), "image/jpeg", 0.7);
-  });
+function snapshotJpeg(bannerText, color) {
+  const c = document.createElement("canvas");
+  c.width = video.videoWidth;
+  c.height = video.videoHeight;
+  const cx = c.getContext("2d");
+  cx.drawImage(video, 0, 0, c.width, c.height);
+  cx.drawImage(overlay, 0, 0, c.width, c.height);
+  cx.fillStyle = color;
+  cx.fillRect(0, 0, c.width, 44);
+  cx.fillStyle = "#fff";
+  cx.font = "bold 24px sans-serif";
+  cx.fillText(bannerText + " — " + new Date().toLocaleTimeString(), 12, 31);
+  return c.toDataURL("image/jpeg", 0.7);
 }
 
 async function sendAlert({ type = "fall", title, event, confidence, manual }) {
   const isStranger = type === "stranger";
   alertTitle.textContent = title || (isStranger ? "🕵️ STRANGER DETECTED" : "🚨 FALL DETECTED");
 
-  if (!telegramReady()) {
-    alertTitle.textContent = title;
+  if (!serverTelegramReady) {
     showFlash("Telegram not configured");
     setTimeout(hideFlash, 2500);
     return;
   }
 
   showFlash("Sending alert…");
-  let blob = null;
+  let imageBase64 = null;
   try {
     if (video.videoWidth) {
-      blob = await snapshotBlob(
+      imageBase64 = snapshotJpeg(
         isStranger ? "STRANGER DETECTED" : "FALL DETECTED",
         isStranger ? "rgba(245,158,11,0.9)" : "rgba(239,68,68,0.9)"
       );
@@ -448,12 +435,31 @@ async function sendAlert({ type = "fall", title, event, confidence, manual }) {
   } catch (_) {}
 
   try {
-    await sendTelegramAlert({ type, event, confidence, manual, blob });
-    alertSub.textContent = "Alert sent to Telegram ✅";
-    log("Alert sent to Telegram.");
+    const res = await fetch("notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        imageBase64,
+        event,
+        type,
+        confidence,
+        manual,
+        clientTime: new Date().toISOString(),
+      }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      alertSub.textContent = "Alert sent to Telegram ✅";
+      log("Alert sent to Telegram.");
+    } else if (data.cooldown) {
+      alertSub.textContent = "Skipped (cooldown).";
+    } else {
+      alertSub.textContent = "Send failed: " + (data.error || "unknown");
+      log("Send failed: " + (data.error || "unknown"));
+    }
   } catch (err) {
-    alertSub.textContent = "Send failed: " + err.message;
-    log("Send failed: " + err.message);
+    alertSub.textContent = "Network error.";
+    log("Network error sending alert: " + err.message);
   }
   setTimeout(hideFlash, 2500);
 }
