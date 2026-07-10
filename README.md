@@ -22,17 +22,22 @@ Phone browser ──getUserMedia──▶ MediaPipe Pose ──event?──▶ P
    (camera)        (on-device)     (state machine)         (Node server)   (photo + ✅/❌ buttons)
 ```
 
-## Detection cases
+## Detection
 
-| Case | How it's detected | Alert |
-|---|---|---|
-| **Fall** | torso goes horizontal + body bounding box wider than tall, held ~0.6 s after being upright | 🚨 ACCIDENT ALERT |
-| **Stranger / concealed identity** | body clearly present, but **face keypoints hidden** (hood over head + mask over face → eyes/nose/mouth read low-confidence), held ~1 s | 🕵️ SECURITY ALERT |
+**Fall**: torso goes horizontal + body bounding box wider than tall, held
+~0.6 s after being upright → 🚨 ACCIDENT ALERT.
 
 Every alert carries **✅ Accept (real)** / **❌ Denied (false)** buttons. Tapping
-one records the verdict, rewrites the message with the decision + who made it, and
-updates a live tally at **`GET /stats`** (`confirmed`, `dismissed`, `precisionPct`)
-— handy to show judges a real human-in-the-loop feedback signal.
+one records the verdict and rewrites the message with the decision + who made it.
+
+### Telegram relay
+
+This app's own server never talks to Telegram directly — some hosts (e.g. HF
+Spaces) block outbound calls to `api.telegram.org`, and the bot token must
+never be sent to the browser. A small **Cloudflare Worker**
+(`fall-alert-relay.jilayouthbank.workers.dev`) holds the bot token as a Worker
+secret, forwards alerts, and handles the Accept/Denied taps via a Telegram
+webhook (see `RELAY_URL` in `public/app.js`).
 
 ---
 

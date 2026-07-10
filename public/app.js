@@ -1,6 +1,5 @@
 import {
   PoseLandmarker,
-  FaceDetector,
   FilesetResolver,
 } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
 
@@ -11,11 +10,9 @@ const ctx = overlay.getContext("2d");
 const startBtn = document.getElementById("startBtn");
 const switchBtn = document.getElementById("switchBtn");
 const testFallBtn = document.getElementById("testFallBtn");
-const testStrangerBtn = document.getElementById("testStrangerBtn");
 const stateBadge = document.getElementById("stateBadge");
 const angleMetric = document.getElementById("angleMetric");
 const aspectMetric = document.getElementById("aspectMetric");
-const faceMetric = document.getElementById("faceMetric");
 const statusDot = document.getElementById("statusDot");
 const tgPill = document.getElementById("tgPill");
 const alertFlash = document.getElementById("alertFlash");
@@ -35,7 +32,6 @@ const log = (msg) => {
 // bot token must never be sent to the browser, so a dedicated relay holds the
 // secret and forwards to Telegram. The relay's URL itself isn't sensitive.
 const RELAY_URL = "https://fall-alert-relay.jilayouthbank.workers.dev";
-const cameraLabel = "Demo Camera (Phone)";
 let serverTelegramReady = false;
 fetch(`${RELAY_URL}/health`)
   .then((r) => r.json())
@@ -71,16 +67,6 @@ const CORE_POINTS = [11, 12, 23, 24];
 const MIN_CORE_VISIBILITY = 0.6; // avg visibility of shoulders+hips to count as a person
 const MIN_CORE_VISIBLE_COUNT = 3; // at least this many core joints clearly seen
 
-// --- Stranger / concealed-identity demo ---
-// A real face DETECTOR (BlazeFace) is run on the pixels. Pose keypoint
-// "visibility" can't see occlusion — it reports 1.00 even for a masked/hooded
-// face because it just predicts where the point *should* be. The detector, by
-// contrast, needs an actual visible face, so hood+mask makes its score drop or
-// find no face at all. That low score is our "identity concealed" signal.
-const FACE_DET_THRESHOLD = 0.55; // face-detector score at/above this = face clearly visible
-const CONCEAL_HOLD_MS = 1000; // face must stay hidden/low this long before flagging
-const STRANGER_COOLDOWN_MS = 20000; // don't re-flag the same person constantly
-
 // Pose landmark indices we rely on (BlazePose 33-point model).
 const L = {
   nose: 0,
@@ -102,8 +88,6 @@ const SKELETON = [
 
 // ---------- State ----------
 let poseLandmarker = null;
-let faceDetector = null;
-let lastFaceScore = 0;
 let stream = null;
 let facingMode = "environment";
 let running = false;
@@ -113,8 +97,6 @@ let lastUprightAt = 0;
 let fallenSince = 0;
 let lastAlertAt = 0;
 let currentState = "idle"; // idle | absent | upright | falling | fallen
-let faceHiddenSince = 0;
-let lastStrangerAt = 0;
 
 // ---------- Model load ----------
 async function loadModel() {
@@ -136,21 +118,7 @@ async function loadModel() {
     minPosePresenceConfidence: 0.7,
     minTrackingConfidence: 0.7,
   });
-
-  log("Loading face detector…");
-  faceDetector = await FaceDetector.createFromOptions(fileset, {
-    baseOptions: {
-      modelAssetPath:
-        "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite",
-      delegate: "GPU",
-    },
-    runningMode: "VIDEO",
-    // Keep this low so we still SEE weak/partial faces and can read their score,
-    // rather than the detector silently dropping them. The concealed-identity
-    // decision uses FACE_DET_THRESHOLD, not this.
-    minDetectionConfidence: 0.2,
-  });
-  log("Models ready.");
+  log("Pose model ready.");
 }
 
 // ---------- Camera ----------
@@ -179,9 +147,8 @@ async function startCamera() {
   statusDot.classList.add("live");
   switchBtn.disabled = false;
   testFallBtn.disabled = false;
-  testStrangerBtn.disabled = false;
   startBtn.textContent = "Stop";
-  log("Camera live. Watching for falls & concealed identities…");
+  log("Camera live. Watching for falls…");
   requestAnimationFrame(renderLoop);
 }
 
@@ -201,20 +168,7 @@ function renderLoop() {
   if (!running) return;
   if (video.currentTime !== lastVideoTime && video.readyState >= 2) {
     lastVideoTime = video.currentTime;
-    const ts = performance.now();
-
-    // Real face detector on the pixels: best detection score, 0 if no face.
-    let faceScore = 0;
-    if (faceDetector) {
-      const fr = faceDetector.detectForVideo(video, ts);
-      for (const d of fr.detections || []) {
-        const s = d.categories?.[0]?.score ?? 0;
-        if (s > faceScore) faceScore = s;
-      }
-    }
-    lastFaceScore = faceScore;
-
-    const result = poseLandmarker.detectForVideo(video, ts + 0.1);
+    const result = poseLandmarker.detectForVideo(video, performance.now());
     processResult(result);
   }
   requestAnimationFrame(renderLoop);
@@ -250,21 +204,6 @@ function processResult(result) {
   }
 
   drawSkeleton(landmarks);
-
-  // --- Stranger / concealed-identity check ---
-  // Person is confirmed present (passed the core gate). Use the real face
-  // DETECTOR score (from renderLoop): a clear face scores high, a hood+mask
-  // covered face scores low or isn't found at all. Suppressed during a fall,
-  // where the face is naturally hidden face-down.
-  faceMetric.textContent = `face ${lastFaceScore.toFixed(2)}`;
-
-  const tNow = performance.now();
-  if (currentState !== "fallen" && lastFaceScore < FACE_DET_THRESHOLD) {
-    if (faceHiddenSince === 0) faceHiddenSince = tNow;
-    if (tNow - faceHiddenSince >= CONCEAL_HOLD_MS) maybeStrangerAlert(lastFaceScore);
-  } else {
-    faceHiddenSince = 0;
-  }
 
   // Torso tilt from vertical.
   const shoulderMid = midpoint(landmarks[L.lShoulder], landmarks[L.rShoulder]);
@@ -330,24 +269,8 @@ function maybeAlert(angle, aspect) {
     0.6 + (angle - FALLEN_ANGLE) / 90 + (aspect - FALLEN_ASPECT) / 2
   );
   sendAlert({
-    type: "fall",
     title: "🚨 FALL DETECTED",
     event: "Fall detected",
-    confidence,
-    manual: false,
-  });
-}
-
-function maybeStrangerAlert(faceScore) {
-  const now = performance.now();
-  if (now - lastStrangerAt < STRANGER_COOLDOWN_MS) return;
-  lastStrangerAt = now;
-  // Lower face-detector score => higher concealment confidence.
-  const confidence = Math.min(1, 0.7 + (FACE_DET_THRESHOLD - faceScore) * 0.5);
-  sendAlert({
-    type: "stranger",
-    title: "🕵️ STRANGER DETECTED",
-    event: "Stranger detected — face/identity concealed (hood + mask)",
     confidence,
     manual: false,
   });
@@ -396,9 +319,7 @@ function noPerson() {
   ctx.clearRect(0, 0, overlay.width, overlay.height);
   angleMetric.textContent = "angle —";
   aspectMetric.textContent = "aspect —";
-  faceMetric.textContent = "face —";
   fallenSince = 0;
-  faceHiddenSince = 0;
   setState("absent");
 }
 
@@ -418,9 +339,8 @@ function snapshotJpeg(bannerText, color) {
   return c.toDataURL("image/jpeg", 0.7);
 }
 
-async function sendAlert({ type = "fall", title, event, confidence, manual }) {
-  const isStranger = type === "stranger";
-  alertTitle.textContent = title || (isStranger ? "🕵️ STRANGER DETECTED" : "🚨 FALL DETECTED");
+async function sendAlert({ title, event, confidence, manual }) {
+  alertTitle.textContent = title || "🚨 FALL DETECTED";
 
   if (!serverTelegramReady) {
     showFlash("Telegram not configured");
@@ -432,10 +352,7 @@ async function sendAlert({ type = "fall", title, event, confidence, manual }) {
   let imageBase64 = null;
   try {
     if (video.videoWidth) {
-      imageBase64 = snapshotJpeg(
-        isStranger ? "STRANGER DETECTED" : "FALL DETECTED",
-        isStranger ? "rgba(245,158,11,0.9)" : "rgba(239,68,68,0.9)"
-      );
+      imageBase64 = snapshotJpeg("FALL DETECTED", "rgba(239,68,68,0.9)");
     }
   } catch (_) {}
 
@@ -446,7 +363,7 @@ async function sendAlert({ type = "fall", title, event, confidence, manual }) {
       body: JSON.stringify({
         imageBase64,
         event,
-        type,
+        type: "fall",
         confidence,
         manual,
         clientTime: new Date().toISOString(),
@@ -491,21 +408,9 @@ switchBtn.addEventListener("click", async () => {
 testFallBtn.addEventListener("click", () => {
   lastAlertAt = performance.now();
   sendAlert({
-    type: "fall",
     title: "🚨 FALL DETECTED",
     event: "Fall detected",
     confidence: 0.95,
-    manual: true,
-  });
-});
-
-testStrangerBtn.addEventListener("click", () => {
-  lastStrangerAt = performance.now();
-  sendAlert({
-    type: "stranger",
-    title: "🕵️ STRANGER DETECTED",
-    event: "Stranger detected — face/identity concealed (hood + mask)",
-    confidence: 0.92,
     manual: true,
   });
 });
