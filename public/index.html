@@ -1,52 +1,296 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Fall Alert — Live Demo</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="app">
-      <header class="topbar">
-        <div class="brand">
-          <span class="dot" id="statusDot"></span>
-          <span>Fall Alert</span>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LoungSy.AI — Watching over what matters most</title>
+  <meta name="description" content="LoungSy.AI turns any CCTV or phone camera into a real-time AI safety guard — detecting falls and accidents and sending instant alerts." />
+  <style>
+    :root{
+      --navy:#0b1b3a; --navy2:#0f2350;
+      --blue:#1a56ff; --blue-d:#1140cc;
+      --ink:#0b1b3a; --muted:#5b6b86;
+      --bg:#ffffff; --soft:#f4f7ff; --line:#e6ecf7;
+      --radius:18px; --shadow:0 14px 40px rgba(11,27,58,.10);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+    .accent{color:var(--blue)}
+
+    /* ---- brand mark ---- */
+    .mark{width:38px;height:38px;flex:0 0 auto}
+    .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:20px;letter-spacing:.2px}
+    .brand .tt{font-weight:400;color:var(--muted);font-size:20px}
+
+    /* ---- nav ---- */
+    header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.82);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+    nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+    .links{display:flex;gap:26px;align-items:center}
+    .links a{color:var(--muted);font-weight:600;font-size:15px}
+    .links a:hover{color:var(--ink)}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 18px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;border:1px solid transparent;transition:.15s}
+    .btn-primary{background:var(--blue);color:#fff}
+    .btn-primary:hover{background:var(--blue-d)}
+    .btn-ghost{background:#fff;color:var(--navy);border-color:var(--line)}
+    .btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
+    @media(max-width:760px){.links .navlink{display:none}}
+
+    /* ---- hero ---- */
+    .hero{position:relative;overflow:hidden;background:
+      radial-gradient(1100px 500px at 82% -10%, #eaf0ff 0%, rgba(234,240,255,0) 60%),
+      radial-gradient(700px 400px at 5% 10%, #f3f7ff 0%, rgba(243,247,255,0) 55%);}
+    .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center;padding:70px 0 64px}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--blue);font-weight:700;font-size:13px;letter-spacing:1.4px;text-transform:uppercase;background:#eaf0ff;padding:7px 12px;border-radius:999px;margin-bottom:18px}
+    h1{font-size:clamp(34px,5vw,56px);line-height:1.06;letter-spacing:-1px;font-weight:850}
+    .lead{color:var(--muted);font-size:19px;margin:18px 0 28px;max-width:520px}
+    .cta{display:flex;gap:14px;flex-wrap:wrap}
+    .trust{display:flex;gap:20px;flex-wrap:wrap;margin-top:26px;color:var(--muted);font-size:14px;font-weight:600}
+    .trust span{display:flex;align-items:center;gap:7px}
+    @media(max-width:860px){.hero-grid{grid-template-columns:1fr;padding:48px 0}}
+
+    /* ---- hero visual: glowing mark + alert card ---- */
+    .visual{position:relative;display:flex;justify-content:center;align-items:center;min-height:360px}
+    .halo{position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,#dfe9ff 0%,rgba(223,233,255,0) 70%);top:0}
+    .markbig{width:150px;height:150px;filter:drop-shadow(0 12px 26px rgba(26,86,255,.28));position:relative;z-index:1}
+    .alert-card{position:absolute;bottom:8px;right:0;width:290px;background:#0e1a30;color:#e9eefb;border-radius:16px;padding:15px 16px;box-shadow:0 24px 60px rgba(11,27,58,.35);border:1px solid #1c2c4d;z-index:2}
+    .alert-card .ttl{font-weight:800;font-size:15px;margin-bottom:8px;color:#fff}
+    .alert-card .row{font-size:12.5px;color:#b9c6e6;margin:3px 0}
+    .alert-card .row b{color:#e9eefb;font-weight:600}
+    .alert-btns{display:flex;gap:8px;margin-top:11px}
+    .abtn{flex:1;text-align:center;font-size:12px;font-weight:700;padding:7px;border-radius:9px}
+    .abtn.ok{background:#123b2b;color:#41d69a}
+    .abtn.no{background:#3a1720;color:#f27a8c}
+    @media(max-width:460px){.alert-card{width:250px}.markbig{width:120px;height:120px}}
+
+    /* ---- pillars ---- */
+    .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:8px 0 6px;margin-top:6px}
+    .pill{display:flex;flex-direction:column;gap:9px;align-items:flex-start;padding:20px;border:1px solid var(--line);border-radius:var(--radius);background:#fff}
+    .pill .ic{width:26px;height:26px;color:var(--blue)}
+    .pill b{font-size:15px}
+    .pill span{color:var(--muted);font-size:13.5px}
+    @media(max-width:760px){.pillars{grid-template-columns:repeat(2,1fr)}}
+
+    /* ---- sections ---- */
+    section{padding:74px 0}
+    .kicker{color:var(--blue);font-weight:800;letter-spacing:1.4px;text-transform:uppercase;font-size:13px;margin-bottom:10px}
+    h2{font-size:clamp(27px,3.4vw,38px);letter-spacing:-.6px;font-weight:820;line-height:1.12}
+    .sub{color:var(--muted);font-size:18px;margin-top:12px;max-width:600px}
+
+    .det-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:36px}
+    .det{border:1px solid var(--line);border-radius:var(--radius);padding:22px;background:#fff;transition:.18s}
+    .det:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#dbe4fb}
+    .det .badge{width:44px;height:44px;border-radius:12px;background:#eaf0ff;display:flex;align-items:center;justify-content:center;color:var(--blue);margin-bottom:14px}
+    .det h3{font-size:16px;margin-bottom:5px}
+    .det p{color:var(--muted);font-size:13.5px}
+    .det .live{display:inline-block;margin-top:10px;font-size:11px;font-weight:800;letter-spacing:.4px;color:#0a8f5b;background:#e2f7ee;padding:3px 8px;border-radius:999px}
+    @media(max-width:960px){.det-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:520px){.det-grid{grid-template-columns:1fr}}
+
+    .soft{background:var(--soft);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:38px}
+    .step{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:26px}
+    .step .n{width:34px;height:34px;border-radius:10px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;margin-bottom:14px}
+    .step h3{font-size:17px;margin-bottom:6px}
+    .step p{color:var(--muted);font-size:14.5px}
+    @media(max-width:760px){.steps{grid-template-columns:1fr}}
+
+    /* ---- contact ---- */
+    .contact-card{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);color:#eef3ff;border-radius:26px;padding:46px;display:grid;grid-template-columns:1.1fr 1fr;gap:36px;align-items:center;overflow:hidden;position:relative}
+    .contact-card h2{color:#fff}
+    .contact-card .sub{color:#aebbdd}
+    .cinfo{display:flex;flex-direction:column;gap:14px}
+    .cline{display:flex;align-items:center;gap:13px;font-size:15.5px}
+    .cline .ic{width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;color:#8fb0ff;flex:0 0 auto}
+    .cline b{display:block;font-size:12px;color:#9fb0d6;font-weight:600;letter-spacing:.3px}
+    .cline a,.cline span{font-size:15.5px;color:#fff;font-weight:600}
+    @media(max-width:760px){.contact-card{grid-template-columns:1fr;padding:32px}}
+
+    footer{padding:34px 0;color:var(--muted);font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+
+  <!-- ================= NAV ================= -->
+  <header>
+    <nav class="wrap">
+      <a class="brand" href="#top">
+        <svg class="mark" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M16 10h13v33h20v11H16z" fill="#0b1b3a"/>
+          <path d="M45 40 h7 l6 -6" stroke="#1a56ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M45 46 h11 l4 4" stroke="#1a56ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="52" cy="30" r="2.4" fill="#1a56ff"/>
+          <circle cx="60" cy="50" r="2.4" fill="#1a56ff"/>
+          <circle cx="43" cy="45" r="8.5" fill="#0b1b3a" stroke="#fff" stroke-width="2"/>
+          <circle cx="43" cy="45" r="3.6" fill="#1a56ff"/>
+        </svg>
+        <span>Loung<span class="accent">Sy</span><span class="tt">.AI</span></span>
+      </a>
+      <div class="links">
+        <a class="navlink" href="#detection">Detection</a>
+        <a class="navlink" href="#how">How it works</a>
+        <a class="navlink" href="#contact">Contact</a>
+        <a class="btn btn-primary" href="demo/">Live demo</a>
+      </div>
+    </nav>
+  </header>
+
+  <a id="top"></a>
+
+  <!-- ================= HERO ================= -->
+  <div class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">● Real-time AI safety monitoring</span>
+        <h1>Watching over<br>what <span class="accent">matters most.</span></h1>
+        <p class="lead">LoungSy.AI turns any CCTV or phone camera into a smart safety guard — spotting falls and accidents in real time and sending an instant alert with a photo, time and location.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="demo/">▶ Try the live demo</a>
+          <a class="btn btn-ghost" href="#contact">Contact us</a>
         </div>
-        <div class="pill" id="tgPill">Telegram: …</div>
-      </header>
+        <div class="trust">
+          <span>🛡️ Smart Detection</span>
+          <span>⚡ Real-time Alerts</span>
+          <span>📷 Any Camera</span>
+        </div>
+      </div>
 
-      <div class="stage">
-        <video id="video" playsinline muted></video>
-        <canvas id="overlay"></canvas>
+      <div class="visual">
+        <div class="halo"></div>
+        <svg class="markbig" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M16 10h13v33h20v11H16z" fill="#0b1b3a"/>
+          <path d="M45 40 h7 l6 -6" stroke="#1a56ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M45 46 h11 l4 4" stroke="#1a56ff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="52" cy="30" r="2.4" fill="#1a56ff"/>
+          <circle cx="60" cy="50" r="2.4" fill="#1a56ff"/>
+          <circle cx="43" cy="45" r="8.5" fill="#0b1b3a" stroke="#fff" stroke-width="2"/>
+          <circle cx="43" cy="45" r="3.6" fill="#1a56ff"/>
+        </svg>
 
-        <div class="hud">
-          <div class="hud-row">
-            <span class="badge" id="stateBadge">Idle</span>
-            <span class="metric" id="angleMetric">angle —</span>
-            <span class="metric" id="aspectMetric">aspect —</span>
+        <!-- live alert preview (mirrors the real Telegram alert) -->
+        <div class="alert-card">
+          <div class="ttl">🚨 ແຈ້ງເຕືອນອຸບັດຕິເຫດ</div>
+          <div class="row">⚠️ ເຫດການ: <b>ກວດພົບຄົນລົ້ມ</b></div>
+          <div class="row">📍 ສະຖານທີ່: <b>American Center Vientiane</b></div>
+          <div class="row">🕒 ເວລາ: <b>22:01 (UTC+7)</b></div>
+          <div class="row">📊 ຄວາມໝັ້ນໃຈ: <b>95%</b></div>
+          <div class="alert-btns">
+            <div class="abtn ok">✅ ຢືນຢັນ</div>
+            <div class="abtn no">❌ ປະຕິເສດ</div>
           </div>
         </div>
-
-        <div class="alert-flash" id="alertFlash">
-          <div class="alert-card">
-            <div class="alert-title" id="alertTitle">🚨 FALL DETECTED</div>
-            <div class="alert-sub" id="alertSub">Sending alert…</div>
-          </div>
-        </div>
       </div>
-
-      <div class="controls">
-        <button id="startBtn" class="btn primary">Start camera</button>
-        <button id="switchBtn" class="btn" disabled>Flip camera</button>
-      </div>
-      <div class="controls">
-        <button id="testFallBtn" class="btn warn" disabled>Test fall</button>
-      </div>
-
-      <p class="log" id="log">Tap “Start camera”, allow access, then stand in frame and demonstrate a fall.</p>
     </div>
 
-    <script type="module" src="app.js"></script>
-  </body>
+    <!-- pillars -->
+    <div class="wrap" style="padding-bottom:20px">
+      <div class="pillars">
+        <div class="pill">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.5 8 8 11 4.5-3 8-6 8-11V5z" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <b>Smart Detection</b><span>AI understands what the camera sees.</span>
+        </div>
+        <div class="pill">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" stroke-linejoin="round"/><path d="M10 20a2 2 0 0 0 4 0" stroke-linecap="round"/></svg>
+          <b>Real-time Alerts</b><span>Instant notification the moment it happens.</span>
+        </div>
+        <div class="pill">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6-1.5A3.5 3.5 0 0 1 18 18Z" stroke-linejoin="round"/><path d="m10 13 2 2 3-3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <b>Any Camera</b><span>Works with CCTV or just a phone.</span>
+        </div>
+        <div class="pill">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0" stroke-linecap="round"/><circle cx="17" cy="9" r="2.2"/><path d="M15 20a5 5 0 0 1 6-4" stroke-linecap="round"/></svg>
+          <b>Safer Communities</b><span>Protecting the people you care about.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= DETECTION ================= -->
+  <section id="detection" class="wrap">
+    <div class="kicker">Detection</div>
+    <h2>What <span class="accent">LoungSy.AI</span> sees</h2>
+    <p class="sub">Smarter eyes for safer people, homes and communities. One platform, many kinds of danger.</p>
+    <div class="det-grid">
+      <div class="det">
+        <div class="badge"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="14" cy="5" r="2"/><path d="M13 8l-4 3 3 3M9 11l-3 6M12 14l4 1" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>Falls</h3>
+        <p>A person collapses or can't get back up.</p>
+        <span class="live">● LIVE IN DEMO</span>
+      </div>
+      <div class="det">
+        <div class="badge"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3s5 4 5 9a5 5 0 0 1-10 0c0-2 1-3 1-3 1 2 2 2 2 2s-1-4 2-8Z" stroke-linejoin="round"/></svg></div>
+        <h3>Fire &amp; smoke</h3>
+        <p>Flames or smoke detected before it spreads.</p>
+      </div>
+      <div class="det">
+        <div class="badge"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.2"/><path d="M6 20a6 6 0 0 1 12 0" stroke-linecap="round"/><path d="M19 4a2.5 2.5 0 0 1 0 5" stroke-linecap="round"/></svg></div>
+        <h3>Strangers</h3>
+        <p>An unknown person enters a private space.</p>
+      </div>
+      <div class="det">
+        <div class="badge"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a8 8 0 0 1 16 0" stroke-linecap="round"/><circle cx="8" cy="12.5" r="2.3"/><circle cx="16" cy="12.5" r="2.3"/><path d="M10.3 12.5h3.4" stroke-linecap="round"/></svg></div>
+        <h3>Robbery</h3>
+        <p>Forced entry or theft in progress.</p>
+      </div>
+      <div class="det">
+        <div class="badge"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16l1.5-5A2 2 0 0 1 7.4 9.6h6.2a2 2 0 0 1 1.9 1.4L17 16" stroke-linejoin="round"/><path d="M3 16h16" stroke-linecap="round"/><circle cx="7" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/><path d="M19 7l2-1M19 11l2.5.4" stroke-linecap="round"/></svg></div>
+        <h3>Road accidents</h3>
+        <p>A crash or collision on the street.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HOW IT WORKS ================= -->
+  <div class="soft">
+    <section id="how" class="wrap">
+      <div class="kicker">How it works</div>
+      <h2>From camera to alert in seconds</h2>
+      <p class="sub">No new hardware. The AI runs on the device and only sends an alert when it matters.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="n">1</div>
+          <h3>Point a camera</h3>
+          <p>Use existing CCTV or a phone. The AI watches the live view on-device — private by design.</p>
+        </div>
+        <div class="step">
+          <div class="n">2</div>
+          <h3>AI detects the event</h3>
+          <p>LoungSy.AI recognises a fall or accident the moment it happens, with a confidence score.</p>
+        </div>
+        <div class="step">
+          <div class="n">3</div>
+          <h3>Instant alert</h3>
+          <p>A notification lands on your phone with a snapshot, time and location — ready to act on.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= CONTACT ================= -->
+  <section id="contact" class="wrap">
+    <div class="contact-card">
+      <div>
+        <div class="kicker" style="color:#8fb0ff">Get in touch</div>
+        <h2>Let's make your space safer.</h2>
+        <p class="sub">Interested in a pilot, a partnership, or a demo for your organisation? We'd love to talk.</p>
+        <a class="btn btn-primary" style="margin-top:22px" href="mailto:hello@loungsy.ai">✉ Email us</a>
+      </div>
+      <div class="cinfo">
+        <div class="cline"><span class="ic">✉️</span><span><b>EMAIL</b><a href="mailto:hello@loungsy.ai">hello@loungsy.ai</a></span></div>
+        <div class="cline"><span class="ic">💬</span><span><b>TELEGRAM</b><a href="https://t.me/loungsy_najah_bot" target="_blank" rel="noopener">@loungsy_najah_bot</a></span></div>
+        <div class="cline"><span class="ic">📞</span><span><b>PHONE</b><span>+856 20 XX XXX XXX</span></span></div>
+        <div class="cline"><span class="ic">📍</span><span><b>LOCATION</b><span>Vientiane, Laos</span></span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="wrap">
+    <div>© <span id="yr"></span> LoungSy.AI · Watching over what matters most.</div>
+    <div><a href="demo/" class="accent" style="font-weight:700">Open live demo →</a></div>
+  </footer>
+
+  <script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+</body>
 </html>
