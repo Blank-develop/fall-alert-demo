@@ -1228,6 +1228,261 @@
       text-transform: uppercase;
     }
 
+    /* team */
+    .team-section {
+      position: relative;
+      overflow: hidden;
+      border-top: 1px solid rgba(138, 176, 221, 0.08);
+      border-bottom: 1px solid rgba(138, 176, 221, 0.08);
+      background:
+        radial-gradient(circle at 15% 24%, rgba(45, 125, 255, 0.09), transparent 24rem),
+        radial-gradient(circle at 90% 76%, rgba(78, 231, 255, 0.07), transparent 22rem);
+    }
+
+    .team-section::before {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      content: "";
+      opacity: 0.18;
+      background-image:
+        linear-gradient(rgba(92, 130, 178, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(92, 130, 178, 0.12) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+    }
+
+    .team-shell {
+      position: relative;
+      z-index: 1;
+    }
+
+    .team-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 42px;
+      align-items: end;
+      margin-bottom: 48px;
+    }
+
+    .team-heading .section-heading {
+      margin-bottom: 0;
+    }
+
+    .team-signal {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 5px;
+      color: #7990ad;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.11em;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+
+    .team-signal::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      content: "";
+      background: var(--green);
+      box-shadow: 0 0 12px var(--green);
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .member-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(155deg, rgba(15, 28, 47, 0.96), rgba(7, 14, 25, 0.98));
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.16);
+    }
+
+    .member-photo {
+      position: relative;
+      aspect-ratio: 3 / 4;
+      overflow: hidden;
+      background: #0a111c;
+    }
+
+    .member-photo::after {
+      position: absolute;
+      inset: auto 0 0;
+      height: 38%;
+      content: "";
+      background: linear-gradient(to top, #0a1422, transparent);
+    }
+
+    .member-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+
+    .member-index {
+      position: absolute;
+      z-index: 2;
+      top: 14px;
+      left: 14px;
+      padding: 6px 8px;
+      border: 1px solid rgba(78, 231, 255, 0.22);
+      border-radius: 7px;
+      color: var(--cyan);
+      background: rgba(4, 10, 18, 0.72);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      backdrop-filter: blur(8px);
+    }
+
+    .member-body {
+      position: relative;
+      min-height: 244px;
+      padding: 20px;
+    }
+
+    .member-body::before {
+      position: absolute;
+      top: 0;
+      left: 20px;
+      width: 42px;
+      height: 1px;
+      content: "";
+      background: var(--cyan);
+      box-shadow: 8px 0 18px rgba(78, 231, 255, 0.55);
+    }
+
+    .member-name {
+      color: #f2f7ff;
+      font-size: 20px;
+      line-height: 1.14;
+    }
+
+    .member-role {
+      display: block;
+      margin-top: 9px;
+      color: var(--cyan);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .member-bio {
+      margin-top: 14px;
+      color: #8fa1ba;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .mentor-block {
+      margin-top: 28px;
+    }
+
+    .mentor-label {
+      margin-bottom: 14px;
+      color: #7389a7;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .mentor-card {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.7fr) 1.3fr;
+      overflow: hidden;
+      border: 1px solid rgba(78, 231, 255, 0.2);
+      border-radius: var(--radius);
+      background:
+        radial-gradient(circle at 84% 25%, rgba(45, 125, 255, 0.16), transparent 19rem),
+        linear-gradient(135deg, rgba(14, 28, 48, 0.98), rgba(6, 13, 23, 0.98));
+      box-shadow: var(--shadow);
+    }
+
+    .mentor-photo {
+      position: relative;
+      min-height: 440px;
+      overflow: hidden;
+      background: #aeb6c4;
+    }
+
+    .mentor-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+
+    .mentor-photo::after {
+      position: absolute;
+      inset: 0;
+      content: "";
+      box-shadow: inset -1px 0 rgba(78, 231, 255, 0.16);
+    }
+
+    .mentor-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 52px;
+    }
+
+    .mentor-content .kicker {
+      margin-bottom: 22px;
+    }
+
+    .mentor-content h3 {
+      font-size: clamp(30px, 4vw, 46px);
+      line-height: 1.05;
+    }
+
+    .mentor-role {
+      margin-top: 12px;
+      color: var(--cyan);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .mentor-copy {
+      max-width: 560px;
+      margin-top: 22px;
+      color: #9aabc1;
+      font-size: 17px;
+      line-height: 1.7;
+    }
+
+    .mentor-note {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 34px;
+      color: #758ca9;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .mentor-note::before {
+      width: 28px;
+      height: 1px;
+      content: "";
+      background: var(--cyan);
+    }
+
     /* CTA */
     .contact-shell {
       position: relative;
@@ -1395,6 +1650,22 @@
 
       .impact-copy {
         padding-right: 0;
+      }
+
+      .team-heading {
+        align-items: start;
+      }
+
+      .team-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .mentor-card {
+        grid-template-columns: minmax(260px, 0.85fr) 1.15fr;
+      }
+
+      .mentor-content {
+        padding: 38px;
       }
     }
 
@@ -1572,6 +1843,44 @@
         min-height: 160px;
       }
 
+      .team-heading {
+        display: block;
+        margin-bottom: 34px;
+      }
+
+      .team-signal {
+        margin-top: 24px;
+      }
+
+      .team-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .member-body {
+        min-height: 0;
+      }
+
+      .mentor-block {
+        margin-top: 20px;
+      }
+
+      .mentor-card {
+        grid-template-columns: 1fr;
+      }
+
+      .mentor-photo {
+        min-height: 0;
+        aspect-ratio: 4 / 5;
+      }
+
+      .mentor-content {
+        padding: 32px 22px 36px;
+      }
+
+      .mentor-copy {
+        font-size: 15px;
+      }
+
       .contact-shell {
         padding: 34px 22px;
         border-radius: 22px;
@@ -1613,6 +1922,7 @@
           <a class="nav-link" href="#detection">Detection</a>
           <a class="nav-link" href="#pipeline">How it works</a>
           <a class="nav-link" href="#impact">Impact</a>
+          <a class="nav-link" href="#team">Team</a>
           <a class="nav-link" href="#contact">Contact</a>
         </div>
         <a class="button button-primary" href="demo/">
@@ -1942,6 +2252,85 @@
           <div class="impact-stat"><span class="stat-label">Response</span><strong>&lt;1s</strong><span>From detection to dispatch</span></div>
           <div class="impact-stat"><span class="stat-label">Hardware</span><strong>0 new</strong><span>Use cameras already in place</span></div>
           <div class="impact-stat"><span class="stat-label">Coverage</span><strong>5+</strong><span>Critical event categories</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="team" class="section team-section">
+      <div class="team-shell wrap">
+        <div class="team-heading">
+          <div class="section-heading">
+            <div class="kicker">The people behind the system</div>
+            <h2>About our team.</h2>
+            <p class="section-copy">A multidisciplinary team combining AI engineering, business strategy, partnerships and finance to make everyday spaces safer.</p>
+          </div>
+          <div class="team-signal">Human-led · AI-powered</div>
+        </div>
+
+        <div class="team-grid">
+          <article class="member-card">
+            <div class="member-photo">
+              <span class="member-index">CORE · 01</span>
+              <img src="images/team/member1.webp" alt="Chilanhouth Nityongkhay, Co-founder and CTO" width="536" height="816" loading="lazy">
+            </div>
+            <div class="member-body">
+              <h3 class="member-name">Chilanhouth Nityongkhay</h3>
+              <span class="member-role">Co-founder · CTO</span>
+              <p class="member-bio">Five years of experience transforming complex technical challenges into seamless, cutting-edge products and AI applications.</p>
+            </div>
+          </article>
+
+          <article class="member-card">
+            <div class="member-photo">
+              <span class="member-index">CORE · 02</span>
+              <img src="images/team/member2.webp" alt="Soukkala Duangta, Co-founder and CEO" width="538" height="822" loading="lazy">
+            </div>
+            <div class="member-body">
+              <h3 class="member-name">Soukkala DUANGTA</h3>
+              <span class="member-role">Co-founder · CEO</span>
+              <p class="member-bio">Four years of experience driving strategic growth, scaling operations and launching innovative solutions in the tech ecosystem.</p>
+            </div>
+          </article>
+
+          <article class="member-card">
+            <div class="member-photo">
+              <span class="member-index">CORE · 03</span>
+              <img src="images/team/member3.webp" alt="Soukpasert Khamboounmar, Sales Director" width="534" height="814" loading="lazy">
+            </div>
+            <div class="member-body">
+              <h3 class="member-name">Soukpasert Khamboounmar</h3>
+              <span class="member-role">Sales Director</span>
+              <p class="member-bio">Five years of experience driving revenue growth, scaling sales pipelines and securing strategic enterprise partnerships.</p>
+            </div>
+          </article>
+
+          <article class="member-card">
+            <div class="member-photo">
+              <span class="member-index">CORE · 04</span>
+              <img src="images/team/member4.webp" alt="Niphaphone Thammalath, CFO" width="530" height="820" loading="lazy">
+            </div>
+            <div class="member-body">
+              <h3 class="member-name">Niphaphone THAMMALATH</h3>
+              <span class="member-role">CFO</span>
+              <p class="member-bio">Over five years of experience executing high-impact growth and brand strategies across the electronics industry.</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="mentor-block">
+          <div class="mentor-label">Strategic guidance · 01 mentor</div>
+          <article class="mentor-card">
+            <div class="mentor-photo">
+              <img src="images/team/mentor.webp" alt="Fino, YES staff consultant and LoungSy mentor" width="528" height="816" loading="lazy">
+            </div>
+            <div class="mentor-content">
+              <div class="kicker">Our mentor</div>
+              <h3>Fino <span class="accent">(YES staff)</span></h3>
+              <div class="mentor-role">Consultant</div>
+              <p class="mentor-copy">Four years of experience driving strategic growth, scaling operations and launching innovative solutions in the tech ecosystem.</p>
+              <div class="mentor-note">Advising strategy, operations and market readiness</div>
+            </div>
+          </article>
         </div>
       </div>
     </section>
